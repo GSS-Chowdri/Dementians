@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 
 from kivy.app import App
+from kivy.uix import label
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -54,3 +55,21 @@ def init_db():
     conn.commit()
     conn.close()
 init_db()
+
+#--------------------------------------------
+class ModeSelectionScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout=BoxLayout(orientation='vertical', spacing=20, padding=20)
+        lbl= Label(text='Dementia Care Assistant', font_size='24sp', bold=True)
+        btn_patient=Button(text='Enter Patient Mode', size_hint=(1,0.4), background_color=(0.2, 0.6, 1, 1))
+        btn_safeman=Button(text='Enter Safe Man Mode', size_hint=(1,0.4), background_color=(0.2, 0.8, 0.4, 1))
+        btn_patient.bind(on_press=self.go_patient)
+        btn_safeman.bind(on_press=self.go_safeman)
+        self.add_widget(layout)
+    def go_patient(self, instance):
+        self.manager.current='patient_mode'
+    def go_safeman(self, instance):
+        self.manager.current='safeman_mode'
+
+#---------------------------------------------

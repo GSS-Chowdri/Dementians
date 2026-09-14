@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from math import remainder
 from msilib import text
 
 import cv2
@@ -7,6 +8,7 @@ import face_recognition
 import numpy as np
 from datetime import datetime
 
+from face_recognition import face_locations
 from kivy.app import App
 from kivy.uix import label
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -102,11 +104,13 @@ class PatientModeScreen(Screen):
         self.capture = cv2.VideoCapture(0)
         Clock.schedule_interval(self.update_frame, 1.0/30.0)
         Clock.schedule_interval(self.check_reminders, 30.0)
+
     def on_leave(self):
         if self.capture:
             self.capture.release()
         Clock.unschdule(self.update_frame)
         Clock.unschdule(self.check_reminders)
+
     def load_known_faces(self):
         self.known_encodings.clear()
         self.known_names.clear()
@@ -122,3 +126,61 @@ class PatientModeScreen(Screen):
             self.known_relations.append(relation)
             self.known_encodings.append(encoding)
         conn.close()
+
+    def update_frame(self, dt):
+        ret, frame=self.capture.read()
+        if not ret:
+            return
+
+        rgb_frame=cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        small_frame=cv2.resize(rgb_frame, (0, 0), fx=0.25, fy=0.25)
+        face_locations= face_recognition.face_locations(small_frame)
+        face_encodings= face_recognition.face_encodings(small_frame, face_locations)
+
+        found_person=False
+        for face_encodings in face_encodings:
+            matches=face_recognition.compare_faces(self.known_encodings, face_encodings, tolerance=0.5)
+            if True in matches:
+                match_index=matches.index(True)
+                name=self.known_names[match_index]
+                relation=self.known_relations[match_index]
+
+                self.info_label.text = f"SAFE PERSON DETECTED!\nName: {name}\nRelation: {relation}"
+                found_person=True
+
+                if vibrator:
+                    try: vibrator.vibrate(1)
+                    except Exception: pass
+                break
+            if not found_person:
+                self.info_label.txt="Scanning surroundings..."
+
+            buffer = cv2.flip(frame, 0).tobytes()
+            texture= Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+            texture.blit_buffer(buffer, colorfmt='bgr', bufferfmt='ubyte')
+            self.img_widget.texture=texture
+
+    def check_reminders(self, dt):
+        now_str=datetime.now().strftime("%H:%M")
+        conn=sqlite3.connect("dementia_assistant.db")
+        cursor=conn.cursor()
+        cursor.execute("SELECT title, type FROM reminders WHERE time_str = ?", (now_str,))
+        reminders=cursor.fetchall()
+        conn.close()
+
+        for title, r_type in reminders:
+            if notification:
+                notification.notify(
+                    title=f"Reminder: {r_type}",
+                    message=title,
+                    timeout=10
+                )
+            if vibrator:
+                vibrator.vibrate(2)
+
+    def go_back(self, instance):
+        self.manager.current='select_mode'
+
+#-----------------------------------------------
+#Safe Man mode

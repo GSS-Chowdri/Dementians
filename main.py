@@ -1,5 +1,7 @@
 import os
 import sqlite3
+from msilib import text
+
 import cv2
 import face_recognition
 import numpy as np
@@ -57,6 +59,7 @@ def init_db():
 init_db()
 
 #--------------------------------------------
+#Basic UI
 class ModeSelectionScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -73,3 +76,49 @@ class ModeSelectionScreen(Screen):
         self.manager.current='safeman_mode'
 
 #---------------------------------------------
+#Patient Mode
+class PatientModeScreen(Screen):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        self.layout=BoxLayout(orientation='vertical', spacing=10, padding=10)
+        self.img_widget= Image(size_hint=(1,0.6))
+        self.info_label= Label(text='Scanning for registered caregivers...', font_size='18sp', size_hint=(1,0.2))
+
+        btn_back= Button(text="Back to Menu", size_hint=(1, 0.1))
+        btn_back.bind(on_press=self.go_back)
+
+        self.layout.add_widget(self.img_widget)
+        self.layout.add_widget(self.info_label)
+        self.layout.add_widget(btn_back)
+        self.add_widget(self.layout)
+
+        self.capture = None
+        self.known_encodings=[]
+        self.known_names=[]
+        self.known_relations=[]
+
+    def on_enter(self):
+        self.load_known_faces()
+        self.capture = cv2.VideoCapture(0)
+        Clock.schedule_interval(self.update_frame, 1.0/30.0)
+        Clock.schedule_interval(self.check_reminders, 30.0)
+    def on_leave(self):
+        if self.capture:
+            self.capture.release()
+        Clock.unschdule(self.update_frame)
+        Clock.unschdule(self.check_reminders)
+    def load_known_faces(self):
+        self.known_encodings.clear()
+        self.known_names.clear()
+        self.known_relations.clear()
+
+        conn=sqlite3.connect('dementia_assistant.db')
+        cursor=conn.cursor()
+        cursor.execute("SELECT name, relation, encoding FROM safe_people")
+        rows=cursor.fetchall()
+        for name, relation, enc_bytes in rows:
+            encoding=np.frombuffer(enc_bytes, dtype=np.float64)
+            self.known_names.append(name)
+            self.known_relations.append(relation)
+            self.known_encodings.append(encoding)
+        conn.close()

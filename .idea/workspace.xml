@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d2f56541-7f52-4af0-b1cb-8b95bda69455" name="Changes" comment="Defined Database changes for Patient Mode">
+    <list default="true" id="d2f56541-7f52-4af0-b1cb-8b95bda69455" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -103,7 +103,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789386487885</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Defined and Completed v0.4A:&#10;-v0.1A: Import&#10;-v0.2A: DBMS creation&#10;-v0.3A: Basic UI&#10;-v0.4A &quot;NEW&quot;: Patient Mode completed">
+      <option name="closed" value="true" />
+      <created>1789397847648</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1789397847648</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -137,6 +145,7 @@
     <MESSAGE value="Defined Database for the following:&#10;-&gt;Safe Man&#10;-&gt; Medications and Routines&#10;-&gt; Safe Zone/Radius" />
     <MESSAGE value="Defined Screen Manager and Modes" />
     <MESSAGE value="Defined Database changes for Patient Mode" />
-    <option name="LAST_COMMIT_MESSAGE" value="Defined Database changes for Patient Mode" />
+    <MESSAGE value="Defined and Completed v0.4A:&#10;-v0.1A: Import&#10;-v0.2A: DBMS creation&#10;-v0.3A: Basic UI&#10;-v0.4A &quot;NEW&quot;: Patient Mode completed" />
+    <option name="LAST_COMMIT_MESSAGE" value="Defined and Completed v0.4A:&#10;-v0.1A: Import&#10;-v0.2A: DBMS creation&#10;-v0.3A: Basic UI&#10;-v0.4A &quot;NEW&quot;: Patient Mode completed" />
   </component>
 </project>

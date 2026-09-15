@@ -19,10 +19,9 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.image import Image
 from kivy.clock import Clock
 from kivy.graphics.texture import Texture
-from pywin32_testutil import non_admin_error_codes
 
 try:
-    from plyer import vibrator, notification, gps
+    from plyer import vibrator, notification, gps, orientation
 except ImportError:
     vibrator=None
     notification=None
@@ -184,3 +183,90 @@ class PatientModeScreen(Screen):
 
 #-----------------------------------------------
 #Safe Man mode
+class SafeManModeScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        layout=BoxLayout(orientation='vertical', padding=10, spacing=10)
+        lbl=Label(text="Safe Man Control Panel", font_size='20sp', bold=True)
+
+        self.input_name= TextInput(hint_text="Full Name", multiline=False)
+        self.input_relation= TextInput(hint_text="Relation to Patient (e.g. Son, Doctor)", multiline=False)
+        self.input_photo_path= TextInput(hint_text="Attach photo", multiline=False)
+        btn_register=Button(text="Register Safe Man", background_color=(0.2,0.7,0.3,1))
+        btn_register.bind(on_press=self.register_person)
+
+        self.input_rem_title= TextInput(hint_text="Reminder Title (e.g. Take Aspirin)", multiline=False)
+        self.input_rem_time=  TextInput(hint_text="Time (HH:MM 24hr format)", multiline=False)
+        btn_add_rem= Button(text="Add Medication/Routine Reminder", background_color=(0.8, 0.5, 0.2, 1))
+        btn_add_rem.bind(on_press=self.add_reminder)
+
+        btn_back=Button(text="Back to menu")
+        btn_back.bind(on_press=self.go_back)
+
+        layout.add_widget(lbl)
+        layout.add_widget(self.input_name)
+        layout.add_widget(self.input_relation)
+        layout.add_widget(self.input_photo_path)
+        layout.add_widget(btn_register)
+        layout.add_widget(self.input_rem_title)
+        layout.add_widget(self.input_rem_time)
+        layout.add_widget(btn_add_rem)
+        layout.add_widget(btn_back)
+
+        self.add_widget(layout)
+
+    def register_person(self, instance):
+        name=self.input_name.text.strip()
+        relation=self.input_relation.text.strip()
+        path=self.input_photo_path.text.strip()
+
+        if not (name and relation and os.path.exists(path)):
+            print("Invalid inputs or image file missing")
+            return
+        image=face_recognition.load_image_file(path)
+        encoding=face_recognition.face_encodings(image)
+        if len(encoding)>0:
+            encoding_bytes=encoding[0].tobytes()
+            conn = sqlite3.connect("dementia_assistant.db")
+            cursor=conn.cursor()
+            cursor.execute("INSERT INTO safe_people (name, relation, photo_path, encoding) VALUES (?, ?, ?, ?)",
+                           (name, relation, path, encoding_bytes))
+            conn.commit()
+            conn.close()
+            print(f"Successfully registered {name}")
+            self.input_name.text=""
+            self.input_relation.text=""
+            self.input_photo_path.text=""
+        else:
+                print("No face detected in the provided image")
+
+    def add_reminder(self, instance):
+        title=self.input_rem_title.text.strip()
+        time_str=self.input_rem_time.text.strip()
+
+        if title and time_str:
+            conn=sqlite3.connect("dementia_assistant.db")
+            cursor=conn.cursor()
+            cursor.execute("INSERT INTO reminders (title, time_str, type) VALUES (?, ?, ?)",
+                           (title, time_str, "Routine"))
+            conn.commit()
+            conn.close()
+            print(f"SAdded reminder: {title} at {time_str}")
+            self.input_rem_title.text=""
+            self.input_rem_time.text=""
+
+    def go_back(self, instance):
+        self.manager.current='select_mode'
+
+#-------------------------------------------------
+#Main .apk
+class DementiaCareApp(App):
+    def build(self):
+        sm=ScreenManager()
+        sm.add_widget(ModeSelectionScreen(name='select_mode'))
+        sm.add_widget(PatientModeScreen(name='patient_mode'))
+        sm.add_widget(SafeManModeScreen(name='safeman_mode'))
+        return sm
+
+if __name__ == '__main__':
+    DementiaCareApp().run()
